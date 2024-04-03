@@ -6,14 +6,14 @@ import time
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///jwks.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv('NOT_MY_KEY', 'default_key')
+project = Flask(__name__)
+project.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///jwks.db'
+project.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+project.config['SECRET_KEY'] = os.getenv('NOT_MY_KEY', 'default_key')
 
-db = SQLAlchemy(app)
+db = SQLAlchemy(project)
 limiter = Limiter(
-    app,
+    project,
     key_func=get_remote_address,
     default_limits=["10 per second"]
 )
@@ -34,7 +34,7 @@ class AuthLog(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship('User', backref=db.backref('auth_logs', lazy=True))
 
-@app.route('/register', methods=['POST'])
+@project.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
     username = data.get('username')
@@ -49,7 +49,7 @@ def register():
 
     return jsonify({'password': password}), 201
 
-@app.route('/auth', methods=['POST'])
+@project.route('/auth', methods=['POST'])
 @limiter.limit("10 per second")
 def authenticate():
     data = request.get_json()
@@ -68,4 +68,4 @@ def authenticate():
 
 if __name__ == '__main__':
     db.create_all()
-    app.run(debug=True)
+    project.run(debug=True)
